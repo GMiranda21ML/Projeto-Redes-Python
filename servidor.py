@@ -1,13 +1,19 @@
 import socket
+import os
 
 HOST = "127.0.0.1"
 PORTA = 8080
 
+
 def receberMensagem(conexao):
     return conexao.recv(1024).decode()
 
+
 def enviarMensagem(mensagem, conexao):
     conexao.sendall(mensagem.encode())
+
+
+os.system("clear")
 
 servidor = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 servidor.bind((HOST, PORTA))
@@ -20,14 +26,13 @@ print(f"Conectado por {endereco}")
 
 while True:
     data = conexao.recv(1024)
-    
-    if not data:
+
+    if not data or data.decode() == "0":
         print("Cliente desconectou")
         break
 
     mensagem = data.decode()
     print(f"Mensagem do Cliente: {mensagem}")
-
 
 
 print("Encerrando Servidor")
