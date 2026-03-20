@@ -5,6 +5,12 @@ import time
 HOST = "127.0.0.1"
 PORTA = 8080
 
+RESET = "\033[0m"
+NEGRITO = "\033[1m"
+VERMELHO = "\033[1;31m"
+VERDE = "\033[1;32m"
+ROXO = "\033[1;35m"
+
 
 def receberMensagem(conexao):
     return conexao.recv(1024).decode()
@@ -14,28 +20,32 @@ def enviarMensagem(mensagem, conexao):
     conexao.sendall(mensagem.encode())
 
 
-def titulo():
-    print("""
-                                                                  
- _____     _                 _      _____           _         _   
-|   | |___| |_ _ _ _ ___ ___| |_   |  _  |___ ___  |_|___ ___| |_ 
-| | | | -_|  _| | | | . |  _| '_|  |   __|  _| . | | | -_|  _|  _|
-|_|___|___|_| |_____|___|_| |_,_|  |__|  |_| |___|_| |___|___|_|  
-                                                 |___|            
-""")
+def exibirCabecalho():
+    os.system("cls" if os.name == "nt" else "clear")
+    print(f"{ROXO}{NEGRITO}")
+    print("   ________    _____________________________")
+    print("  / ____/ /   /  _/ ____/ | / /_  __/ ____/")
+    print(" / /   / /    / // __/ /  |/ / / / / __/   ")
+    print("/ /___/ /____/ // /___/ /|  / / / / /___   ")
+    print("\\____/_____/___/_____/_/ |_/ /_/ /_____/   ")
+    print(f"{RESET}")
+    print("┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓")
+    print(f"┃  {VERDE}STATUS: Conectado, Aguardando Comandos{RESET}             ┃")
+    print(f"┃  {ROXO}ALVO: {HOST:<15}{RESET}  {ROXO}PORTA: {PORTA:<15}{RESET}      ┃")
+    print("┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛\n")
 
 
 def desenharMenu():
     os.system("cls" if os.name == "nt" else "clear")
 
-    titulo()
+    exibirCabecalho()
 
     print("┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓")
     print("┃                 MENU DE COMUNICAÇÃO                 ┃")
     print("┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫")
     print("┃                                                     ┃")
-    print("┃  \033[1;32m[ 1 ]\033[0m Enviar uma nova mensagem ao servidor         ┃")
-    print("┃  \033[1;31m[ 0 ]\033[0m Encerrar conexão e sair                      ┃")
+    print(f"┃  {VERDE}[ 1 ]{RESET} Enviar uma nova mensagem ao servidor         ┃")
+    print(f"┃  {VERMELHO}[ 0 ]{RESET} Encerrar conexão e sair                      ┃")
     print("┃                                                     ┃")
     print("┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛")
     print("\n")
@@ -43,6 +53,12 @@ def desenharMenu():
 
 def voltarMenu():
     for i in range(5, 0, -1):
+        print(f"\rVoltando ao menu em {i}...", end="", flush=True)
+        time.sleep(1)
+
+
+def voltarMenu(seg):
+    for i in range(seg, 0, -1):
         print(f"\rVoltando ao menu em {i}...", end="", flush=True)
         time.sleep(1)
 
@@ -58,7 +74,12 @@ try:
     while True:
         desenharMenu()
         # op = int(input("Digite a sua opção: "))
-        op = int(input("\033[1;34mSelecione uma opção > \033[0m"))
+        try:
+            op = int(input("\033[1;34mSelecione uma opção > \033[0m"))
+        except Exception as e:
+            print(f"Erro, digite um número inteiro: {e}")
+            voltarMenu(3)
+            continue
 
         if op == 0:
             enviarMensagem("0", cliente)
