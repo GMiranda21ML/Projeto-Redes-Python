@@ -26,7 +26,7 @@ def titulo():
 
 
 def desenharMenu():
-    os.system("clear")
+    os.system("cls" if os.name == "nt" else "clear")
 
     titulo()
 
@@ -42,7 +42,7 @@ def desenharMenu():
 
 
 def voltarMenu():
-    for i in range(3, 0, -1):
+    for i in range(5, 0, -1):
         print(f"\rVoltando ao menu em {i}...", end="", flush=True)
         time.sleep(1)
 
@@ -50,13 +50,10 @@ def voltarMenu():
 # host = input("Digite o host do servidor (EX.: 127.0.0.1): ")
 # porta = int(input("Digite a porta do servidor: "))
 
-os.system("clear")
 try:
     cliente = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     cliente.connect((HOST, PORTA))
     # cliente.connect((host, porta))
-
-    enviarMensagem("Olá, servidor!", cliente)
 
     while True:
         desenharMenu()
@@ -71,13 +68,39 @@ try:
             tamanho = int(input("Digite o tamanho da mensagem: "))
             enviarMensagem(str(tamanho), cliente)
             retorno = receberMensagem(cliente)
-            if not "OK" in retorno:
+
+            if retorno != "OK":
                 print(retorno)
                 voltarMenu()
                 continue
 
             mensagem = input("Mande alguma mensagem para o servidor: ")
-            enviarMensagem(mensagem, cliente)
+
+            print("\n--- A enviar pacotes ---")
+            seq = 1
+            for i in range(0, len(mensagem), 4):
+                pedaco = mensagem[i : i + 4]
+
+                pacote = f"{seq}|{len(pedaco)}|{pedaco}"
+
+                enviarMensagem(pacote, cliente)
+
+                ack = receberMensagem(cliente)
+
+                print(f"[METADADO] Confirmação recebida do servidor: {ack}")
+
+                seq += 1
+
+            enviarMensagem("FIM|0|", cliente)
+            ackFinal = receberMensagem(cliente)
+            print(f"[METADADO] Fim da transmissão: {ackFinal}\n")
+
+            statusTamanho = receberMensagem(cliente)
+            if statusTamanho != "OK":
+                print(statusTamanho)
+
+            voltarMenu()
+
         else:
             print("Opção invalida! Por favor, digite novamente")
 
