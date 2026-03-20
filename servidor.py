@@ -32,7 +32,22 @@ while True:
         break
 
     mensagem = data.decode()
-    print(f"Mensagem do Cliente: {mensagem}")
+
+    if mensagem == "Olá, servidor!":
+        print(f"Mensagem do Cliente: {mensagem}")
+        continue
+
+    if mensagem.isdigit():
+        tamanho = int(mensagem)
+
+        if tamanho < 30:
+            enviarMensagem("ERRO: O tamanho minimo é de 30 caracteres", conexao)
+            continue
+
+        enviarMensagem("OK", conexao)
+        novaMensagem = receberMensagem(conexao)
+
+        print(f"O cliente enviou: {novaMensagem}")
 
 
 print("Encerrando Servidor")

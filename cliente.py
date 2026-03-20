@@ -1,5 +1,6 @@
 import socket
 import os
+import time
 
 HOST = "127.0.0.1"
 PORTA = 8080
@@ -13,11 +14,37 @@ def enviarMensagem(mensagem, conexao):
     conexao.sendall(mensagem.encode())
 
 
-def desenharMenu():
+def titulo():
     print("""
-Digite 1 para mandar mensagem
-Digite 0 para encerrar a comunicação
-    """)
+                                                                  
+ _____     _                 _      _____           _         _   
+|   | |___| |_ _ _ _ ___ ___| |_   |  _  |___ ___  |_|___ ___| |_ 
+| | | | -_|  _| | | | . |  _| '_|  |   __|  _| . | | | -_|  _|  _|
+|_|___|___|_| |_____|___|_| |_,_|  |__|  |_| |___|_| |___|___|_|  
+                                                 |___|            
+""")
+
+
+def desenharMenu():
+    os.system("clear")
+
+    titulo()
+
+    print("┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓")
+    print("┃                 MENU DE COMUNICAÇÃO                 ┃")
+    print("┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫")
+    print("┃                                                     ┃")
+    print("┃  \033[1;32m[ 1 ]\033[0m Enviar uma nova mensagem ao servidor         ┃")
+    print("┃  \033[1;31m[ 0 ]\033[0m Encerrar conexão e sair                      ┃")
+    print("┃                                                     ┃")
+    print("┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛")
+    print("\n")
+
+
+def voltarMenu():
+    for i in range(3, 0, -1):
+        print(f"\rVoltando ao menu em {i}...", end="", flush=True)
+        time.sleep(1)
 
 
 # host = input("Digite o host do servidor (EX.: 127.0.0.1): ")
@@ -33,13 +60,22 @@ try:
 
     while True:
         desenharMenu()
-        op = int(input("Digite a sua opção: "))
+        # op = int(input("Digite a sua opção: "))
+        op = int(input("\033[1;34mSelecione uma opção > \033[0m"))
 
         if op == 0:
             enviarMensagem("0", cliente)
             cliente.close()
             break
         elif op == 1:
+            tamanho = int(input("Digite o tamanho da mensagem: "))
+            enviarMensagem(str(tamanho), cliente)
+            retorno = receberMensagem(cliente)
+            if not "OK" in retorno:
+                print(retorno)
+                voltarMenu()
+                continue
+
             mensagem = input("Mande alguma mensagem para o servidor: ")
             enviarMensagem(mensagem, cliente)
         else:
