@@ -51,13 +51,7 @@ def desenharMenu():
     print("\n")
 
 
-def voltarMenu():
-    for i in range(5, 0, -1):
-        print(f"\rVoltando ao menu em {i}...", end="", flush=True)
-        time.sleep(1)
-
-
-def voltarMenu(seg):
+def voltarMenu(seg=5):
     for i in range(seg, 0, -1):
         print(f"\rVoltando ao menu em {i}...", end="", flush=True)
         time.sleep(1)
