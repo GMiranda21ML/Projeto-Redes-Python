@@ -93,6 +93,7 @@ while True:
         enviarMensagem("OK", conexao)
 
         mensagemCompleta = ""
+        tamanhoAcumulado = 0
         print("\n--- A receber novos pacotes ---")
 
         while True:
@@ -109,8 +110,17 @@ while True:
                 break
 
             seq = partes[0]
-            tamanhoPayload = partes[1]
+            tamanhoPayload = int(partes[1])
             payload = partes[2]
+
+            tamanhoAcumulado += tamanhoPayload
+
+            if tamanhoAcumulado > tamanho:
+                enviarMensagem("ERRO|LIMITE", conexao)
+                print(
+                    f"[ERRO] A mensagem ultrapassou o limite de {tamanho} caracteres. Abortando recebimento."
+                )
+                break
 
             print(
                 f"[{pegarTempo()}] [METADADO] Pacote Seq: {seq} | Tamanho recebido: {tamanhoPayload} bytes | Payload: {payload}"
@@ -120,12 +130,7 @@ while True:
 
             enviarMensagem(f"ACK|{seq}", conexao)
 
-        if len(mensagemCompleta) > tamanho:
-            enviarMensagem(
-                f"ERRO: A mensagem ultrapassou o limite de {tamanho} caracteres",
-                conexao,
-            )
-        else:
+        if tamanhoAcumulado <= tamanho:
             enviarMensagem("OK", conexao)
             print(f"\n[COMUNICAÇÃO COMPLETA] O cliente enviou: {mensagemCompleta}")
 

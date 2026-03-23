@@ -93,6 +93,7 @@ try:
 
             print("\n--- A enviar pacotes ---")
             seq = 1
+            houveErro = False
             for i in range(0, len(mensagem), 4):
                 pedaco = mensagem[i : i + 4]
 
@@ -102,17 +103,25 @@ try:
 
                 ack = receberMensagem(cliente)
 
+                if ack == "ERRO|LIMITE":
+                    print(
+                        f"\n[ERRO] O servidor interrompeu a conexão: Limite de {tamanho} caracteres excedido!"
+                    )
+                    houveErro = True
+                    break
+
                 print(f"[METADADO] Confirmação recebida do servidor: {ack}")
 
                 seq += 1
 
-            enviarMensagem("FIM|0|", cliente)
-            ackFinal = receberMensagem(cliente)
-            print(f"[METADADO] Fim da transmissão: {ackFinal}\n")
+            if not houveErro:
+                enviarMensagem("FIM|0|", cliente)
+                ackFinal = receberMensagem(cliente)
+                print(f"[METADADO] Fim da transmissão: {ackFinal}\n")
 
-            statusTamanho = receberMensagem(cliente)
-            if statusTamanho != "OK":
-                print(statusTamanho)
+                statusTamanho = receberMensagem(cliente)
+                if statusTamanho != "OK":
+                    print(statusTamanho)
 
             voltarMenu()
 
