@@ -60,11 +60,42 @@ def voltarMenu(seg=5):
 # host = input("Digite o host do servidor (EX.: 127.0.0.1): ")
 # porta = int(input("Digite a porta do servidor: "))
 
+while True:    
+    print("\n--- Configuração Inicial da Conexão ---")
+    print("[ 1 ] Go-Back-N (GBN)")
+    print("[ 2 ] Repetição Seletiva (SR)")
+    try:
+        escolhaProt = int(input("Escolha o protocolo (1 ou 2): "))
+        if escolhaProt == 1:
+            protocolo = "GBN"
+        elif escolhaProt == 2:
+            protocolo = "SR"
+        else:
+            os.system("cls" if os.name == "nt" else "clear")
+            print("Opção invalida! Por favor, digite novamente")
+            continue
+        break
+    except Exception as e:
+        os.system("cls" if os.name == "nt" else "clear")
+        print(f"Erro, digite um número inteiro: {e}")
+        continue
+
 try:
     cliente = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     cliente.connect((HOST, PORTA))
     # cliente.connect((host, porta))
 
+    enviarMensagem(f"CONFIG|{protocolo}", cliente)
+
+    respostaConfig = receberMensagem(cliente)
+    if respostaConfig.startswith("OK_CONFIG|"):
+        tamanhoJanela = int(respostaConfig.split("|")[1])
+        print(f"\n[SISTEMA] Conectado! O servidor definiu a janela inicial para: {tamanhoJanela}")
+    else:
+        print("Erro ao configurar a conexão com o servidor.")
+        cliente.close()
+        exit()
+    
     while True:
         desenharMenu()
         # op = int(input("Digite a sua opção: "))
@@ -91,28 +122,57 @@ try:
 
             mensagem = input("Mande alguma mensagem para o servidor: ")
 
-            print("\n--- A enviar pacotes ---")
+            pacotes = []
             seq = 1
-            houveErro = False
             for i in range(0, len(mensagem), 4):
                 pedaco = mensagem[i : i + 4]
-
-                pacote = f"{seq}|{len(pedaco)}|{pedaco}"
-
-                enviarMensagem(pacote, cliente)
-
-                ack = receberMensagem(cliente)
-
-                if ack == "ERRO|LIMITE":
-                    print(
-                        f"\n[ERRO] O servidor interrompeu a conexão: Limite de {tamanho} caracteres excedido!"
-                    )
-                    houveErro = True
-                    break
-
-                print(f"[METADADO] Confirmação recebida do servidor: {ack}")
-
+                pacotes.append(f"{seq}|{len(pedaco)}|{pedaco}")
                 seq += 1
+            
+            base = 0
+            proximoSeq = 0
+            houveErro = False
+            
+            while base < len(pacotes):
+                print(f"\n--- Enviando lote (Modo: {protocolo}, Janela Atual: {tamanhoJanela}) ---")
+
+
+                while proximoSeq < base + tamanhoJanela and proximoSeq < len(pacotes):
+                    enviarMensagem(pacotes[proximoSeq], cliente)
+                    time.sleep(0.05)
+                    proximoSeq += 1
+
+                pacotesEsperadosAck = proximoSeq - base
+                acksRecebidos = 0
+                
+                while acksRecebidos < pacotesEsperadosAck:
+                    ackBruto = receberMensagem(cliente)
+                    
+                    listaAcks = ackBruto.replace("ACK|", " ACK|").replace("ERRO|", " ERRO|").split()
+                    
+                    for ack in listaAcks:
+                        if ack == "ERRO|LIMITE":
+                            print(f"\n[ERRO] O servidor interrompeu a conexão: Limite excedido!")
+                            houveErro = True
+                            break
+                            
+                        if ack.startswith("ACK|"):
+                            partesAck = ack.split("|")
+                            if len(partesAck) == 3:
+                                seqConfirmado = partesAck[1]
+                                novaJanela = int(partesAck[2])
+                                
+                                if novaJanela != tamanhoJanela:
+                                    tamanhoJanela = novaJanela
+                                    print(f"[SISTEMA] O servidor alterou o tamanho da janela para: {tamanhoJanela}")
+                                    
+                            print(f"[METADADO] Confirmação processada: {ack}")
+                            acksRecebidos += 1
+                
+                if houveErro:
+                    break
+                    
+                base = proximoSeq
 
             if not houveErro:
                 enviarMensagem("FIM|0|", cliente)
@@ -127,6 +187,7 @@ try:
 
         else:
             print("Opção invalida! Por favor, digite novamente")
+            voltarMenu(2)
 
 except Exception as e:
     print(f"Erro ao estabelecer conexão: {e}")

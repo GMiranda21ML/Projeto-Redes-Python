@@ -1,6 +1,7 @@
 import socket
 import os
 import time
+import random
 
 HOST = "127.0.0.1"
 PORTA = 8080
@@ -56,6 +57,22 @@ def exibirTempoEndereco(endereco):
     print(f"Conectado por {endereco}")
 
 
+def receberConfiguracaoCliente(conn):
+    dados = receberMensagem(conn)
+    if dados.startswith("CONFIG|"):
+        partes = dados.split("|")
+        protocolo = partes[1]
+        
+        janelaAtual = 5 
+        
+        print(f"[{pegarTempo()}] [SISTEMA] Cliente configurado para {protocolo}. Janela inicial: {janelaAtual}.")
+        
+        enviarMensagem(f"OK_CONFIG|{janelaAtual}", conn)
+        return protocolo, janelaAtual
+        
+    return "GBN", 5
+
+
 limparTerminal()
 
 exibirCabecalho()
@@ -68,6 +85,8 @@ conexao, endereco = servidor.accept()
 
 exibirTempoEndereco(endereco)
 
+protocoloCliente, janelaCliente = receberConfiguracaoCliente(conexao)
+
 while True:
     data = conexao.recv(1024)
 
@@ -79,6 +98,7 @@ while True:
         exibirCabecalho()
         conexao, endereco = servidor.accept()
         exibirTempoEndereco(endereco)
+        protocoloCliente, janelaCliente = receberConfiguracaoCliente(conexao)
         continue
 
     mensagem = data.decode()
@@ -94,7 +114,9 @@ while True:
 
         mensagemCompleta = ""
         tamanhoAcumulado = 0
-        print("\n--- A receber novos pacotes ---")
+        seqEsperado = 1
+        bufferSr = {}
+        print(f"\n--- A receber novos pacotes (Modo: {protocoloCliente})---")
 
         while True:
             dadosPacote = receberMensagem(conexao)
@@ -109,7 +131,7 @@ while True:
                 enviarMensagem("ACK|FIM", conexao)
                 break
 
-            seq = partes[0]
+            seq = int(partes[0])
             tamanhoPayload = int(partes[1])
             payload = partes[2]
 
@@ -126,9 +148,28 @@ while True:
                 f"[{pegarTempo()}] [METADADO] Pacote Seq: {seq} | Tamanho recebido: {tamanhoPayload} bytes | Payload: {payload}"
             )
 
-            mensagemCompleta += payload
+            janelaCliente = random.randint(1, 5)
 
-            enviarMensagem(f"ACK|{seq}", conexao)
+            if protocoloCliente == "GBN":
+                if seq == seqEsperado:
+                    mensagemCompleta += payload
+                    seqEsperado += 1
+                    enviarMensagem(f"ACK|{seq}|{janelaCliente}", conexao)
+                else:
+                    print(f"[{pegarTempo()}] [DESCARTADO] Pacote {seq} fora de ordem.")
+                    enviarMensagem(f"ACK|{seqEsperado - 1}|{janelaCliente}", conexao)
+                time.sleep(0.05)
+
+            elif protocoloCliente == "SR":
+                bufferSr[seq] = payload
+                
+                while seqEsperado in bufferSr:
+                    mensagemCompleta += bufferSr.pop(seqEsperado)
+                    seqEsperado += 1
+                    
+                enviarMensagem(f"ACK|{seq}|{janelaCliente}", conexao)
+
+                time.sleep(0.05)
 
         if tamanhoAcumulado <= tamanho:
             enviarMensagem("OK", conexao)
