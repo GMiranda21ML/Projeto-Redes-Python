@@ -58,9 +58,16 @@ def exibirTempoEndereco(endereco):
 def receberMensagem(conexao, timeout=None):
     if timeout is not None: conexao.settimeout(timeout)
     else: conexao.settimeout(None)
-    dado = conexao.recv(4096).decode()
+    linha = b""
+    while True:
+        byte = conexao.recv(1)
+        if not byte:
+            break
+        if byte == b"\n":
+            break
+        linha += byte
     conexao.settimeout(None)
-    return dado
+    return linha.decode()
 
 def enviarMensagem(mensagem, conexao):
     conexao.sendall((mensagem + "\n").encode())
