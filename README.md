@@ -84,6 +84,7 @@ Foi utilizada Inteligência Artificial de forma auxiliar durante o desenvolvimen
 - Organização do menu da aplicação
 - Correção de pequenos erros no código
 - Sugestões de melhoria na legibilidade
+- Criptografia 
 
 A lógica principal da aplicação, incluindo a implementação da comunicação via socket e do handshake, foi desenvolvida pelo grupo.
 
