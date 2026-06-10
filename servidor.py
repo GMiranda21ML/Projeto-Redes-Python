@@ -90,13 +90,14 @@ def receberConfiguracaoCliente(conn):
     dados = receberMensagem(conn)
     if dados: dados = dados.strip()
     if not dados or not dados.startswith("CONFIG|"):
-        return "GBN", "IND", 5, None
+        return "GBN", "GRP", 5, None
 
     partes = dados.split("|")
     protocolo = partes[1] if len(partes) > 1 else "GBN"
-    modo_ack = partes[2] if len(partes) > 2 else "IND"
     usa_cripto = partes[3] if len(partes) > 3 else "NAO"
     janela_ini = 5
+
+    modo_ack = "GRP" if protocolo == "GBN" else "IND"
 
     print(f"[{pegarTempo()}] {CIANO}[HANDSHAKE]{RESET} Protocolo: {protocolo} | ACK: {modo_ack} | Cripto: {usa_cripto} | Janela: {janela_ini}")
     enviarMensagem(f"OK_CONFIG|{janela_ini}", conn)

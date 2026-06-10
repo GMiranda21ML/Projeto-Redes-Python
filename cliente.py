@@ -80,8 +80,8 @@ def montar_pacote(seq: int, payload: str, simular_erro: bool = False) -> str:
 def configurar_conexao():
     while True:
         print("\n--- Configuração Inicial da Conexão ---")
-        print("[ 1 ] Go-Back-N (GBN)")
-        print("[ 2 ] Repetição Seletiva (SR)")
+        print("[ 1 ] Go-Back-N (GBN)         → ACK em grupo (cumulativo)")
+        print("[ 2 ] Repetição Seletiva (SR) → ACK individual")
         try:
             escolha = int(input("Escolha o protocolo (1 ou 2): "))
             if escolha == 1:
@@ -95,22 +95,7 @@ def configurar_conexao():
         except ValueError:
             print("Digite um número inteiro.")
 
-    while True:
-        print("\n--- Modo de Confirmação (ACK) ---")
-        print("[ 1 ] Individual (confirma cada pacote separadamente)")
-        print("[ 2 ] Grupo      (confirma o lote inteiro ao final)")
-        try:
-            escolha = int(input("Escolha o modo (1 ou 2): "))
-            if escolha == 1:
-                modo_ack = "IND"
-            elif escolha == 2:
-                modo_ack = "GRP"
-            else:
-                print("Opção inválida!")
-                continue
-            break
-        except ValueError:
-            print("Digite um número inteiro.")
+    modo_ack = "GRP" if protocolo == "GBN" else "IND"
 
     while True:
         print("\n--- Criptografia (XOR simétrico) ---")
